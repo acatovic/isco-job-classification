@@ -1,0 +1,13 @@
+torch
+pandas
+networkx
+transformers
+datasets
+scikit-learn
+fasttext-langdetect
+openai
+sentence-transformers
+einops
+mlx
+mlx-lm
+langdetect
