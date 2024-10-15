@@ -2,6 +2,7 @@ import argparse
 import json
 import logging
 from pathlib import Path
+import pickle
 
 from mlx_lm import load
 import pandas as pd
@@ -68,6 +69,12 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=str, required=False, default="../output/", help="Output directory")
     args = parser.parse_args()
 
-    translation_pipeline(args.data, args.output)
+    #translation_pipeline(args.data, args.output)
 
-    parsing_pipeline(args.output)
+    #parsing_pipeline(args.output)
+
+    with open("../embeddings/stella_400m_occupations_embs.pkl", "rb") as f:
+        occupations_embs = pickle.load(f)
+
+    print(type(occupations_embs))
+    print(occupations_embs.shape)
