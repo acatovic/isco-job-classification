@@ -22,8 +22,10 @@ def translate_to_english(text: str, model: Any, tokenizer: Any, max_tokens: int 
     system_prompt = (
         "You are an expert language translation assistant, "
         "tasked with translating online job postings, "
-        "from any given language, into English. "
-        "Don't provide any explanations or additional notes - just translate the given text."
+        "from any given language, into English.\n"
+        "DO NOT PROVIDE ANY EXPLANATIONS OR ADDITIONAL NOTES - JUST TRANSLATE THE GIVEN TEXT.\n"
+        "DO NOT START YOUR RESPONSE WITH 'Here is the translation of the job posting:' or anything similar.\n"
+        "Simply provide the translation of the job posting."
     )
     translation_prompt = set_llama_prompt(system_prompt, text)
 
