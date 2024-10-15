@@ -1,5 +1,6 @@
 from typing import Any
 
+from langdetect import detect
 from mlx_lm import generate
 
 from base import set_llama_prompt
@@ -14,6 +15,10 @@ def translate_to_english(text: str, model: Any, tokenizer: Any, max_tokens: int 
     Returns:
         str: The translated text.
     """
+    # no need to translate if the text is already in English
+    if detect(text[:250].lower()) == "en":
+        return text
+
     system_prompt = (
         "You are an expert language translation assistant, "
         "tasked with translating online job postings, "
