@@ -21,6 +21,6 @@ Classification pipeline that categorizes online job postings into standardized I
 ## Example
 
 ```bash
-python pipeline/run.py --data data/sample_job_postings.csv --occupations data/occupations.json --output output/
+python pipeline/run.py --data data/sample_job_postings.csv --occupations data/occupation_data.json --output output/
 ```
 
