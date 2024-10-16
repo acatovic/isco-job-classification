@@ -3,6 +3,7 @@ import csv
 import json
 import logging
 from pathlib import Path
+import pickle
 from typing import Dict, List, Tuple
 
 from mlx_lm import load
@@ -68,7 +69,7 @@ def parsing_pipeline(output_dir: str) -> None:
     with open(output_path, "w") as f:
         json.dump(parsed_job_dicts, f)
 
-def nn_pipeline(output_dir: str) -> Tuple[List[int], np.ndarray]:
+def nn_pipeline(occupations_embs_path: str, output_dir: str) -> Tuple[List[int], np.ndarray]:
     """
     Run the nearest neighbor pipeline. Output the results to a CSV file.
     """
@@ -80,7 +81,10 @@ def nn_pipeline(output_dir: str) -> Tuple[List[int], np.ndarray]:
 
     logger.info("Starting Nearest Neighbor pipeline")
 
-    return (job_ad_ids, nn(query_texts))
+    with open(occupations_embs_path, "rb") as f:
+        occupations_embs = pickle.load(f)
+
+    return (job_ad_ids, nn(query_texts, occupations_embs))
 
 def reranking_pipeline(sims: np.ndarray, job_ad_ids: List[int], isco_codes: pd.Series) -> Dict[int, str]:
     """
@@ -95,16 +99,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", type=str, required=True, help="Path to the job ads CSV file")
     parser.add_argument("--occupations", type=str, required=True, help="Path to the occupations JSON file")
-    parser.add_argument("--output", type=str, required=False, default="../output/", help="Output directory")
+    parser.add_argument("--output", type=str, required=False, default="output/", help="Output directory")
+    parser.add_argument("--embeddings", type=str, required=False, default="embeddings/stella_400m_occupations_embs.pkl", help="Occupations embeddings path")
     args = parser.parse_args()
 
-    translation_pipeline(args.data, args.output)
+    #translation_pipeline(args.data, args.output)
 
-    parsing_pipeline(args.output)
+    #parsing_pipeline(args.output)
 
     esco_codes, isco_codes, occupation_dict = load_occupations(args.occupations)
 
-    job_ad_ids, sims = nn_pipeline(args.output)
+    job_ad_ids, sims = nn_pipeline(args.embeddings, args.output)
 
     predictions = reranking_pipeline(sims, job_ad_ids, isco_codes)
     

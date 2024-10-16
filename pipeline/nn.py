@@ -4,7 +4,7 @@ from typing import List, Tuple
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
-from config import EMBEDDING_MODEL_PATH, OCCUPATIONS_EMBEDDINGS_PATH
+from config import EMBEDDING_MODEL_PATH
 
 QUERY_PROMPT_NAME = "s2p_query"
 
@@ -65,16 +65,13 @@ def set_reference_text(job_titles: List[str], job_description: str, job_skills: 
         f"job skills: {', '.join(job_skills)};"
     ).lower()
 
-def nn(query_texts: List[str]) -> np.ndarray:
+def nn(query_texts: List[str], occupations_embs: np.ndarray) -> np.ndarray:
     model = SentenceTransformer(
         EMBEDDING_MODEL_PATH,
         trust_remote_code=True,
         device="cpu",
         config_kwargs={"use_memory_efficient_attention": False, "unpad_inputs": False}
     )
-
-    with open(OCCUPATIONS_EMBEDDINGS_PATH, "rb") as f:
-        occupations_embs = pickle.load(f)
 
     query_embeddings = model.encode(query_texts, prompt_name=QUERY_PROMPT_NAME)
 
