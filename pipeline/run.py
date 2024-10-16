@@ -2,15 +2,20 @@ import argparse
 import json
 import logging
 from pathlib import Path
-import pickle
+from typing import List, Tuple
 
 from mlx_lm import load
+import numpy as np
 import pandas as pd
 
+from base import check_system_requirements
 from config import LLAMA_MODEL_PATH
-from data import load_job_ads
+from data import load_job_ads, load_occupations
+from nn import nn, prepare_queries
 from skills_extraction import get_parsed_job_dict, parse_job_ad
 from translation import translate_to_english
+
+check_system_requirements()
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -61,6 +66,18 @@ def parsing_pipeline(output_dir: str) -> None:
     with open(output_path, "w") as f:
         json.dump(parsed_job_dicts, f)
 
+def nn_pipeline(output_dir: str) -> Tuple[List[int], np.ndarray]:
+    """
+    Run the nearest neighbor pipeline. Output the results to a CSV file.
+    """
+    path = Path(output_dir) / "job_ads_parsed.csv"
+    with open(path, "r") as f:
+        parsed_job_ads = json.load(f)
+    
+    job_ad_ids, query_texts = prepare_queries(parsed_job_ads)
+
+    return (job_ad_ids, nn(query_texts))
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -73,8 +90,13 @@ if __name__ == "__main__":
 
     #parsing_pipeline(args.output)
 
-    with open("../embeddings/stella_400m_occupations_embs.pkl", "rb") as f:
-        occupations_embs = pickle.load(f)
+    #with open("../embeddings/stella_400m_occupations_embs.pkl", "rb") as f:
+    #    occupations_embs = pickle.load(f)
 
-    print(type(occupations_embs))
-    print(occupations_embs.shape)
+    #print(type(occupations_embs))
+    #print(occupations_embs.shape)
+
+    esco_codes, isco_codes, occupation_dict = load_occupations(args.occupations)
+    job_ad_ids, sims = nn_pipeline(args.output)
+    print(sims)
+    
