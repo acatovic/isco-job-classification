@@ -1,10 +1,11 @@
 import json
 import requests
+from time import sleep
+from typing import Any, Dict, List
+
+import networkx as nx
 import pandas as pd
 from tqdm import tqdm
-from time import sleep
-import networkx as nx
-from typing import Dict, Any, List
 
 
 def get_esco_data(uri: str, endpoint: str) -> dict:
