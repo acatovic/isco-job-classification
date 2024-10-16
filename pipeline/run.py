@@ -1,8 +1,9 @@
 import argparse
+import csv
 import json
 import logging
 from pathlib import Path
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 from mlx_lm import load
 import numpy as np
@@ -12,6 +13,7 @@ from base import check_system_requirements
 from config import LLAMA_MODEL_PATH
 from data import load_job_ads, load_occupations
 from nn import nn, prepare_queries
+from reranking import naive_rerank
 from skills_extraction import get_parsed_job_dict, parse_job_ad
 from translation import translate_to_english
 
@@ -76,7 +78,17 @@ def nn_pipeline(output_dir: str) -> Tuple[List[int], np.ndarray]:
     
     job_ad_ids, query_texts = prepare_queries(parsed_job_ads)
 
+    logger.info("Starting Nearest Neighbor pipeline")
+
     return (job_ad_ids, nn(query_texts))
+
+def reranking_pipeline(sims: np.ndarray, job_ad_ids: List[int], isco_codes: pd.Series) -> Dict[int, str]:
+    """
+    Run the reranking pipeline. Output mapping job ids to predicted ISCO codes.
+    """
+    logger.info("Starting Re-Ranking pipeline")
+    return naive_rerank(sims, isco_codes, job_ad_ids)
+    
 
 
 if __name__ == "__main__":
@@ -86,17 +98,20 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=str, required=False, default="../output/", help="Output directory")
     args = parser.parse_args()
 
-    #translation_pipeline(args.data, args.output)
+    translation_pipeline(args.data, args.output)
 
-    #parsing_pipeline(args.output)
-
-    #with open("../embeddings/stella_400m_occupations_embs.pkl", "rb") as f:
-    #    occupations_embs = pickle.load(f)
-
-    #print(type(occupations_embs))
-    #print(occupations_embs.shape)
+    parsing_pipeline(args.output)
 
     esco_codes, isco_codes, occupation_dict = load_occupations(args.occupations)
+
     job_ad_ids, sims = nn_pipeline(args.output)
-    print(sims)
+
+    predictions = reranking_pipeline(sims, job_ad_ids, isco_codes)
+    
+    # output predictions to CSV
+    predictions_path = Path(args.output) / "predictions.csv"
+    logger.info(f"Storing predictions to {predictions_path}")
+    with open(predictions_path, "w") as f:
+        for job_ad_id, isco_code in predictions.items():
+            f.write(f"{job_ad_id},{isco_code}\n")
     
